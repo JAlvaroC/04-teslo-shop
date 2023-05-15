@@ -1,0 +1,136 @@
+import {
+  BeforeInsert,
+  BeforeUpdate,
+  Column,
+  Entity,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import { ProductImage } from './product-image.entity';
+import { User } from '../../auth/entities/user.entity';
+import { ApiProperty } from '@nestjs/swagger';
+@Entity({ name: 'products' })
+export class Product {
+  @ApiProperty({
+    example: '84e069d6-91dc-4243-967e-a2507db47caa',
+    description: 'Product ID',
+    uniqueItems: true,
+  })
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  @ApiProperty({
+    example: 'Alvaro s shirt51',
+    description: 'Product Title ID',
+    uniqueItems: true,
+  })
+  @Column('text', {
+    unique: true,
+  })
+  title: string;
+
+  @ApiProperty({
+    example: 0,
+    description: 'Product price ',
+  })
+  @Column('float', {
+    default: 0,
+  })
+  price: number;
+
+  @ApiProperty({
+    example:
+      'Voluptate veniam adipisicing commodo veniam ex officia Lorem dolore adipisicing.',
+    description: 'Product description',
+    default: null,
+  })
+  @Column({
+    type: 'text',
+    nullable: true,
+  })
+  description: string;
+
+  @ApiProperty({
+    example: 'alvaros_shirt51',
+    description: 'Product SLUG - for SEO',
+    uniqueItems: true,
+  })
+  @Column('text', {
+    unique: true,
+  })
+  slug: string;
+
+  @ApiProperty({
+    example: 10,
+    description: 'Product stock',
+    default: 0,
+  })
+  @Column('int', {
+    default: 0,
+  })
+  stock: number;
+
+  @ApiProperty({
+    example: ['M', 'X', 'XXL'],
+    description: 'Product sizes',
+  })
+  @Column('text', {
+    array: true,
+  })
+  sizes: string[];
+
+  @ApiProperty({
+    example: 'women',
+    description: 'Product gender',
+  })
+  @Column('text')
+  gender: string;
+
+  // tags
+  // @Column({
+  //   type:'text',
+
+  // })
+  @ApiProperty()
+  @Column('text', {
+    array: true,
+    default: [],
+  })
+  tags: string[];
+
+  // images
+  // @Column()
+  @ApiProperty()
+  @OneToMany(() => ProductImage, (productImage) => productImage.product, {
+    cascade: true,
+    eager: true, //cargara automaticamente las imagenes cuando esta en true
+  })
+  images?: ProductImage[];
+
+  @ManyToOne(() => User, (user) => user.product, {
+    eager: true,
+  })
+  user: User;
+
+  // Before Insert
+  @BeforeInsert()
+  checkSlugInsert() {
+    if (!this.slug) {
+      this.slug = this.title;
+    }
+    this.slug = this.slug
+      .toLowerCase()
+      .replaceAll(' ', '_')
+      .replaceAll("'", '');
+  }
+
+  // BeforeUpdate
+  @BeforeUpdate()
+  checkSlugUpdate() {
+    this.slug = this.title
+      .toLowerCase()
+      .replaceAll(' ', '_')
+      .replaceAll("'", '');
+  }
+}
